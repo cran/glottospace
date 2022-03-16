@@ -4,10 +4,18 @@
 \alias{glottoclean}
 \title{Clean glottodata}
 \usage{
-glottoclean(glottodata, tona = NULL, tofalse = NULL, totrue = NULL)
+glottoclean(
+  glottodata,
+  structure = NULL,
+  tona = NULL,
+  tofalse = NULL,
+  totrue = NULL
+)
 }
 \arguments{
 \item{glottodata}{glottodata (either a list or a data.frame)}
+
+\item{structure}{Optional structure table (should be provided if glottodata doesn't contain any)}
 
 \item{tona}{Optional additional values to recode to NA (besides default)}
 
@@ -20,7 +28,7 @@ A cleaned-up version of the original glottodata object (either a list or a data.
 }
 \description{
 This function is a wrapper around glottorecode. This function has some built in default values that are being recoded.
-For example, "No" is recoded to FALSE and "?" is recoded to NA.
+For example, if column type is 'symm' or 'asymm', values such as "No" and 0 are recoded to FALSE and "?" is recoded to NA.
 Use glottorecode directly if you don't want to use these defaults.
 }
 \examples{

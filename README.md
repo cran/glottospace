@@ -31,7 +31,7 @@ R and integrate them with your own data.
 We’re still actively developing the **glottospace** package by adding
 new functions and improving existing ones. Although the package is
 stable, you might find bugs or encounter things you might find
-confusing. You can help to improve the package by:
+confusing. You can help us to improve the package by:
 
 -   Sending an email to [Sietze
     Norder](mailto:s.j.norder@hum.leidenuniv.nl) with a clear
@@ -180,9 +180,7 @@ You can also load glottodata from online databases such as
 the data (‘glottolog’), or an enriched/boosted version (‘glottobase’):
 
 ``` r
-# Two ways to load glottobase:
-data("glottobase")
-#> Warning in data("glottobase"): data set 'glottobase' not found
+# To load glottobase:
 glottobase <- glottoget("glottobase")
 colnames(glottobase)
 #>  [1] "glottocode"       "name"             "macroarea"        "isocode"         
@@ -204,7 +202,7 @@ glottocreate(glottocodes = c("yucu1253", "tani1257"), variables = 3, meta = FALS
 #> 2   tani1257     NA     NA     NA
 ```
 
-I’ve specified meta = FALSE, to indicate that we want to generate a
+We’ve specified meta = FALSE, to indicate that we want to generate a
 ‘flat’ glottodata table. However, when creating glottodata, by default,
 several meta tables are included:
 
@@ -223,7 +221,7 @@ summary(glottodata_meta)
 #> lookup        2     data.frame list
 ```
 
-The majority of these metatables are added for the convenience of the
+The majority of these meta tables are added for the convenience of the
 user. The ‘structure’ table is the only one that is required for some of
 the functions in the glottospace package. A structure table can also be
 added later:
@@ -276,7 +274,7 @@ glottocheck(glottodata, diagnostic = FALSE)
 #> Some rows have missing data.
 ```
 
-I’ve now specified diagnostic = FALSE, but the default is to show some
+We’ve now specified diagnostic = FALSE, but the default is to show some
 more extensive diagnostics (like a data coverage plot).
 
 You can also check the metadata:
@@ -299,6 +297,8 @@ glottocheck(glottodata, checkmeta = TRUE)
 #> All types recognized
 #> All weights are specified
 ```
+
+<img src="man/figures/README-glottocheckmeta-1.png" width="100%" />
 
 ## glottoclean
 
@@ -348,11 +348,11 @@ glottosearch(search = "yurakar")
 #> Bounding box:  xmin: -65.1224 ymin: -16.7479 xmax: -65.1224 ymax: -16.7479
 #> Geodetic CRS:  WGS 84
 #>      glottocode     name     macroarea isocode countries family_id
-#> 7546   yura1255 Yuracaré South America     yuz        BO  yura1255
+#> 7543   yura1255 Yuracaré South America     yuz        BO  yura1255
 #>      classification parent_id   family isolate family_size family_size_rank
-#> 7546           <NA>      <NA> Yuracaré    TRUE           1                1
+#> 7543           <NA>      <NA> Yuracaré    TRUE           1                1
 #>      country     continent sovereignty                  geometry
-#> 7546 Bolivia South America     Bolivia POINT (-65.1224 -16.7479)
+#> 7543 Bolivia South America     Bolivia POINT (-65.1224 -16.7479)
 ```
 
 Or limit the search to specific columns:
@@ -365,17 +365,17 @@ glottosearch(search = "Yucuni", columns = c("name", "family"))
 #> Bounding box:  xmin: -97.91818 ymin: -0.76075 xmax: -71.0033 ymax: 17.23743
 #> Geodetic CRS:  WGS 84
 #>      glottocode              name     macroarea isocode countries family_id
-#> 7532   yucu1253            Yucuna South America     ycn  BR;CO;PE  araw1281
-#> 7533   yucu1254 Yucunicoco Mixtec North America                MX  otom1299
+#> 7529   yucu1253            Yucuna South America     ycn  BR;CO;PE  araw1281
+#> 7530   yucu1254 Yucunicoco Mixtec North America                MX  otom1299
 #>                                                      classification parent_id
-#> 7532                            araw1281/japu1236/nucl1764/yucu1252  yucu1252
-#> 7533 otom1299/east2557/amuz1253/mixt1422/mixt1423/mixt1427/sout3179  sout3179
+#> 7529                            araw1281/japu1236/nucl1764/yucu1252  yucu1252
+#> 7530 otom1299/east2557/amuz1253/mixt1422/mixt1423/mixt1427/sout3179  sout3179
 #>           family isolate family_size family_size_rank  country     continent
-#> 7532    Arawakan   FALSE          77               40 Colombia South America
-#> 7533 Otomanguean   FALSE         182               44   Mexico North America
+#> 7529    Arawakan   FALSE          77               40 Colombia South America
+#> 7530 Otomanguean   FALSE         181               44   Mexico North America
 #>      sovereignty                   geometry
-#> 7532    Colombia  POINT (-71.0033 -0.76075)
-#> 7533      Mexico POINT (-97.91818 17.23743)
+#> 7529    Colombia  POINT (-71.0033 -0.76075)
+#> 7530      Mexico POINT (-97.91818 17.23743)
 ```
 
 checking for non-standard things in the check directory … NOTE Found the
@@ -403,7 +403,7 @@ glottosearch(search = "matsigenka", tolerance = 0.2)[,"name"]
 #> Bounding box:  xmin: -74.4371 ymin: -11.5349 xmax: -74.4371 ymax: -11.5349
 #> Geodetic CRS:  WGS 84
 #>               name                  geometry
-#> 4779 Nomatsiguenga POINT (-74.4371 -11.5349)
+#> 4775 Nomatsiguenga POINT (-74.4371 -11.5349)
 ```
 
 Aha! There it is: ‘Machiguenga’
@@ -417,16 +417,16 @@ glottosearch(search = "matsigenka", tolerance = 0.4)[,"name"]
 #> Geodetic CRS:  WGS 84
 #> First 10 features:
 #>                    name                   geometry
-#> 1708 Eastern Maninkakan   POINT (-10.5394 9.33048)
-#> 3061    Kita Maninkakan   POINT (-9.49151 13.1798)
-#> 3145   Konyanka Maninka   POINT (-8.89972 8.04788)
+#> 1707 Eastern Maninkakan   POINT (-10.5394 9.33048)
+#> 3059    Kita Maninkakan   POINT (-9.49151 13.1798)
+#> 3143   Konyanka Maninka   POINT (-8.89972 8.04788)
 #> 3724   Maasina Fulfulde   POINT (-3.64763 11.1324)
 #> 3740        Machiguenga  POINT (-72.5017 -12.1291)
 #> 3894           Mandinka POINT (-15.65395 12.81652)
 #> 3930          Mansoanka   POINT (-15.9202 12.8218)
 #> 4033  Matigsalug Manobo     POINT (125.16 7.72124)
-#> 4779      Nomatsiguenga  POINT (-74.4371 -11.5349)
-#> 5371         Piamatsina   POINT (166.738 -14.9959)
+#> 4775      Nomatsiguenga  POINT (-74.4371 -11.5349)
+#> 5368         Piamatsina   POINT (166.738 -14.9959)
 ```
 
 ## glottofilter
@@ -450,15 +450,14 @@ calculating similarities between languages based on linguistic/cultural
 features
 
 ``` r
-# In order to be able to calculate linguistic distances a structure table is required, that's why I specify meta = TRUE.
+# In order to be able to calculate linguistic distances a structure table is required, that's why we specify meta = TRUE.
 glottodata <- glottoget("demodata", meta = TRUE)
 glottodist <- glottodist(glottodata = glottodata)
-#> Warning in cluster::daisy(x = glottodata, metric = "gower", type = list(symm =
-#> symm, : at least one binary variable has not 2 different levels.
-#> Warning in min(x): no non-missing arguments to min; returning Inf
-#> Warning in max(x): no non-missing arguments to max; returning -Inf
-#> Warning in min(x): no non-missing arguments to min; returning Inf
-#> Warning in max(x): no non-missing arguments to max; returning -Inf
+#> glottocode used as id
+#> For some variables of type 'symm' and 'asymm', it is not clear whether they are TRUE of FALSE. It is highly recommended to run glottoclean() before running glottodist(). Attempting to convert the following values to TRUE/FALSE...
+#> [1] "N" "Y"
+#> Values in binary columns (symm/asymm) recoded to TRUE/FALSE
+#> Missing values recoded to NA
 
 # As we've seen above, in case you have glottodata without a structure table, you can add it:
 glottodata <- glottoget("demodata", meta = FALSE)
@@ -474,21 +473,20 @@ linguistic, cultural, and environmental features.
 ``` r
 glottodata <- glottoget("demodata", meta = TRUE)
 glottodist <- glottodist(glottodata = glottodata)
-#> Warning in cluster::daisy(x = glottodata, metric = "gower", type = list(symm =
-#> symm, : at least one binary variable has not 2 different levels.
-#> Warning in min(x): no non-missing arguments to min; returning Inf
-#> Warning in max(x): no non-missing arguments to max; returning -Inf
-#> Warning in min(x): no non-missing arguments to min; returning Inf
-#> Warning in max(x): no non-missing arguments to max; returning -Inf
+#> glottocode used as id
+#> For some variables of type 'symm' and 'asymm', it is not clear whether they are TRUE of FALSE. It is highly recommended to run glottoclean() before running glottodist(). Attempting to convert the following values to TRUE/FALSE...
+#> [1] "N" "Y"
+#> Values in binary columns (symm/asymm) recoded to TRUE/FALSE
+#> Missing values recoded to NA
 glottoplot(glottodist = glottodist)
 ```
 
-<img src="man/figures/README-glottoplot-1.png" width="100%" /><img src="man/figures/README-glottoplot-2.png" width="100%" />
+<img src="man/figures/README-glottoplot-1.png" width="100%" />
 
 ## glottospace
 
-This family of functions turns glottodata into a spatial object. As I’ve
-illustrated above, these can be either glottopoints or glottopols
+This family of functions turns glottodata into a spatial object. As
+we’ve illustrated above, these can be either glottopoints or glottopols
 
 ``` r
 glottodata <- glottoget("demodata")
@@ -503,10 +501,12 @@ glottomap(glottospacedata)
 ## glottomap
 
 With glottomap you can quickly visualize the location of languages.
-Below I show simple static maps, but you can also create dynamic maps by
-specifying type = “dynamic”.
+Below we show simple static maps, but you can also create dynamic maps
+by specifying type = “dynamic”.
 
-You can pass arguments directly to glottofilter
+To select languages, you don’t need to call glottofilter() first, but
+you can use glottomap() directly. Behind the scenes glottomap() passes
+those arguments on to glottofilter().
 
 ``` r
 glottomap(country = "Colombia")

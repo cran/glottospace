@@ -411,9 +411,9 @@ glottocheck_colmissing <- function(data, id, diagnostic = FALSE, rm.na = TRUE){
 #' glottosubdata <- glottoget("demosubdata", meta = FALSE)
 #' glottocheck_isglottosubdata(glottosubdata)
 glottocheck_isglottosubdata <- function(glottodata){
-    all(class(glottodata) == "list" &
+    inherits(glottodata, what = "list" ) &
     !any(names(glottodata) %in% "glottodata") &
-    !purrr::is_empty(colnames(glottodata[[1]])[1] == "glottosubcode"))
+    !purrr::is_empty(colnames(glottodata[[1]])[1] == "glottosubcode")
 }
 
 #' Guess whether an object is glottodata (and not glottosubdata)
@@ -424,13 +424,26 @@ glottocheck_isglottosubdata <- function(glottodata){
 #' @examples
 #' glottodata <- glottoget("demodata", meta = FALSE)
 #' glottocheck_isglottodata(glottodata)
+#' glottodata <- glottoget("demodata", meta = TRUE)
+#' glottocheck_isglottodata(glottodata)
 glottocheck_isglottodata <- function(glottodata){
   glottodata <- contrans_tb2df(glottodata)
   if(is_list(glottodata)){
-    return(all(any(names(glottodata) %in% "glottodata") &
-          !purrr::is_empty(colnames(glottodata[[1]])[1] == "glottocode")) )
+    if("glottodata" %in% names(glottodata)){
+      if(!purrr::is_empty(colnames(glottodata[["glottodata"]])[1])){
+        return(colnames(glottodata[["glottodata"]])[1] %in% c("glottocode", "glottosubcode"))
+      } else {
+        return(FALSE)
+      }
+    } else {
+      return(FALSE)
+    }
   } else {
-    return(!purrr::is_empty(colnames(glottodata)[1] == "glottocode"))
+    if(!purrr::is_empty(colnames(glottodata)[1])){
+      return(colnames(glottodata)[1] %in% c("glottocode", "glottosubcode"))
+    } else {
+      return(FALSE)
+    }
   }
 }
 

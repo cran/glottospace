@@ -1,4 +1,4 @@
-# glottospace 0.0.101
+# glottospace 0.0.111
 
 ## News
 

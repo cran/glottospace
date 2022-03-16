@@ -1,5 +1,7 @@
 #' Generate empty glottodata or glottosubdata for a set of glottocodes.
 #'
+#' Creates glottodata/glottosubdata and optionally save it as excel file.
+#'
 #' By default, glottodata will be created. In case a groups argument is provided, glottosubdata will be created.
 #'
 #' glottodata has one table for all languages (and a number of metatables if meta = TRUE), with one row per glottocode.
@@ -41,16 +43,7 @@
 #' glottocreate(glottocodes = c("yucu1253", "tani1257"),
 #' variables = 3, groups = c("a", "b") )
 #'
-#' # Creates glottodata/glottosubdata and save excel file in specified directory:
-#' \donttest{
-#' glottocreate(glottocodes = c("yucu1253", "tani1257"),
-#'              variables = 3,
-#'              filename = file.path(tempdir(), "glottodata.xlsx") )
 #'
-#' glottocreate(glottocodes = c("yucu1253", "tani1257"),
-#'              variables = 3, groups = c("a", "b"),
-#'              filename = file.path(tempdir(), "glottosubdata.xlsx") )
-#' }
 glottocreate <- function(glottocodes, variables,
                          meta = TRUE, filename = NULL,
                          simplify = TRUE,
@@ -101,12 +94,6 @@ glottocreate <- function(glottocodes, variables,
 #' glottocreate_data(glottocodes = c("yucu1253", "tani1257"),
 #'      variables = 3, meta = FALSE)
 #'
-#' # If you specify a filename, the glottodata object will be saved locally.
-#'\donttest{
-#'glottocreate_data(glottocodes = c("yucu1253", "tani1257"),
-#'                    variables = 3,
-#'                    filename = file.path(tempdir(), "glottodata.xlsx") )
-#'}
 glottocreate_data <- function(glottocodes, variables, filename = NULL, meta = TRUE, check = FALSE, simplify = TRUE, levels = NULL, maintainer = NULL, email = NULL, citation = NULL, url = NULL){
  if(check){
   if(!all(glottocode_exists(glottocodes)) ){stop("Not all glottocodes are valid. Use glottocode_exists() to check which ones. ")}
@@ -133,7 +120,7 @@ glottocreate_data <- function(glottocodes, variables, filename = NULL, meta = TR
     glottosave(glottodata = tablelist, filename = filename)
   }
 
-  if(simplify == TRUE & length(tablelist) == 1 & any(class(tablelist) == "list") ){
+  if(simplify == TRUE & length(tablelist) == 1 & inherits(glottodata, what = "list" ) ){
     tablelist <- tablelist[[1]]
   }
 
@@ -193,7 +180,7 @@ glottocreate_subdata <- function(glottocodes, variables, groups, filename = NULL
   }
 
   if(meta == TRUE){
-  metatables <- glottocreate_metatables(glottocodes = glottocodes, varnames = varnames,
+  metatables <- glottocreate_metatables(glottocodes = glottocodes, glottosubcodes = glottosubcodes, varnames = varnames,
                                        levels = levels,
                                        maintainer = maintainer, email = email, citation = citation, url = url)
 
@@ -210,10 +197,7 @@ glottocreate_subdata <- function(glottocodes, variables, groups, filename = NULL
 }
 
 
-
-
-
-#' Create metatables
+#' Create metatables for glottodata or glottosubdata
 #'
 #' @param glottocodes Character vector of glottocodes
 #' @param varnames Character vector of variable names
@@ -223,15 +207,77 @@ glottocreate_subdata <- function(glottocodes, variables, groups, filename = NULL
 #' @param url Optional url linking to a webpage.
 #' @param levels Optional character vector with levels across all variables
 #' @return a list of metatables
-#' @keywords internal
 #' @export
+#' @keywords internal
 #'
-glottocreate_metatables <- function(glottocodes = NULL, varnames = NULL, levels = NULL, maintainer = NULL, email = NULL, citation = NULL, url = NULL){
+glottocreate_metatables <- function(glottocodes = NULL, glottosubcodes = NULL, varnames = NULL, levels = NULL, maintainer = NULL, email = NULL, citation = NULL, url = NULL){
+  if(is.null(glottosubcodes)){
+    glottocreate_metadatatables(glottocodes = glottocodes,
+                                varnames = varnames, levels = levels,
+                                maintainer = maintainer, email = email, citation = citation, url = url)
+  } else {
+    glottocreate_metasubdatatables(glottocodes = glottocodes, glottosubcodes = glottosubcodes,
+                                   varnames = varnames, levels = levels,
+                                   maintainer = maintainer, email = email, citation = citation, url = url)
+  }
+}
+
+
+
+#' Create metatables for glottodata
+#'
+#' @param glottocodes Character vector of glottocodes
+#' @param varnames Character vector of variable names
+#' @param maintainer Name of the person/organization maintaining the data (optional)
+#' @param email Email address of maintainer/contact person (optional)
+#' @param citation How to cite the data (optional)
+#' @param url Optional url linking to a webpage.
+#' @param levels Optional character vector with levels across all variables
+#' @return a list of metatables
+#' @noRd
+#'
+glottocreate_metadatatables <- function(glottocodes = NULL, varnames = NULL, levels = NULL, maintainer = NULL, email = NULL, citation = NULL, url = NULL){
   structure <- glottocreate_structuretable(varnames = varnames)
   description <- glottocreate_descriptiontable(varnames = varnames, levels = levels)
   references <- glottocreate_reftable(glottocodes = glottocodes, varnames = varnames)
   remarks <- glottocreate_remarkstable(glottocodes = glottocodes, varnames = varnames)
   contributors <- glottocreate_contributorstable(glottocodes = glottocodes, varnames = varnames)
+  sample <- glottocreate_sampletable(glottocodes = glottocodes)
+
+  readme <- glottocreate_readmetable(maintainer = maintainer, email = email, citation = citation, url = url)
+
+  lookup <- glottocreate_lookuptable()
+
+  tablelist <- list("structure" = structure,
+                    "description" = description,
+                    "references" = references,
+                    "remarks" = remarks,
+                    "contributors" = contributors,
+                    "sample" = sample,
+                    "readme" = readme,
+                    "lookup" = lookup)
+  tablelist
+}
+
+#' Create metatables for glottosubdata
+#'
+#' @param glottocodes Character vector of glottocodes
+#' @param glottosubcodes Character vector of glottosubcodes
+#' @param varnames Character vector of variable names
+#' @param maintainer Name of the person/organization maintaining the data (optional)
+#' @param email Email address of maintainer/contact person (optional)
+#' @param citation How to cite the data (optional)
+#' @param url Optional url linking to a webpage.
+#' @param levels Optional character vector with levels across all variables
+#'
+#' @return a list of metatables
+#' @noRd
+glottocreate_metasubdatatables <- function(glottocodes = NULL, glottosubcodes = NULL, varnames = NULL, levels = NULL, maintainer = NULL, email = NULL, citation = NULL, url = NULL){
+  structure <- glottocreate_structuretable(varnames = varnames)
+  description <- glottocreate_descriptiontable(varnames = varnames, levels = levels)
+  references <- glottocreate_refsubtable(glottosubcodes = glottosubcodes, varnames = varnames)
+  remarks <- glottocreate_remarkssubtable(glottosubcodes = glottosubcodes, varnames = varnames)
+  contributors <- glottocreate_contributorssubtable(glottosubcodes = glottosubcodes, varnames = varnames)
   sample <- glottocreate_sampletable(glottocodes = glottocodes)
 
   readme <- glottocreate_readmetable(maintainer = maintainer, email = email, citation = citation, url = url)
@@ -316,6 +362,24 @@ glottocreate_reftable <- function(glottocodes = NULL, varnames = NULL){
   references
 }
 
+#' create reference table for glottosubdata
+#'
+#' @param glottosubcodes Character vector of glottocodes
+#' @param varnames Character vector of variable names
+#'
+#' @noRd
+glottocreate_refsubtable <- function(glottosubcodes = NULL, varnames = NULL){
+  if(is.null(glottosubcodes)){glottosubcodes <- NA}
+  references <- data.frame(matrix(nrow = length(glottosubcodes), ncol = (length(varnames)*2)+3 ) )
+  if(!is.null(varnames)){
+    colnames(references) <- c("glottosubcode", "reference", "page", paste(rep(varnames, each = 2) , c("ref", "page"), sep = "_") )
+  } else {
+    colnames(references) <- c("glottosubcode", "reference", "page"  )
+  }
+  references[,"glottosubcode"] <- glottosubcodes
+  references
+}
+
 #' create remarks table for glottodata
 #'
 #' @param glottocodes Character vector of glottocodes
@@ -335,6 +399,25 @@ glottocreate_remarkstable <- function(glottocodes = NULL, varnames = NULL){
   remarks
 }
 
+#' create remarks table for glottosubdata
+#'
+#' @param glottosubcodes Character vector of glottocodes
+#' @param varnames Character vector of variable names
+#'
+#' @noRd
+glottocreate_remarkssubtable <- function(glottosubcodes = NULL, varnames = NULL){
+  if(is.null(glottosubcodes)){glottosubcodes <- NA}
+  remarks <- data.frame(matrix(nrow = length(glottosubcodes), ncol = length(varnames)+2  ) )
+  if(!is.null(varnames)){
+    colnames(remarks) <- c("glottosubcode", "remark", paste(varnames, c("remark"), sep = "_") )
+  } else {
+    colnames(remarks) <- c("glottosubcode", "remark")
+  }
+
+  remarks[,"glottosubcode"] <- glottosubcodes
+  remarks
+}
+
 #' create contributors table for glottodata
 #'
 #' @param glottocodes Character vector of glottocodes
@@ -351,6 +434,25 @@ glottocreate_contributorstable <- function(glottocodes = NULL, varnames = NULL){
     colnames(contributors) <- c("glottocode", "contributor")
   }
   contributors[,"glottocode"] <- glottocodes
+  contributors
+}
+
+#' create contributors table for glottodata
+#'
+#' @param glottosubcodes Character vector of glottocodes
+#' @param varnames Character vector of variable names
+#'
+#' @noRd
+glottocreate_contributorssubtable <- function(glottosubcodes = NULL, varnames = NULL){
+  if(is.null(glottosubcodes)){glottosubcodes <- NA}
+  contributors <- data.frame(matrix(nrow = length(glottosubcodes), ncol = length(varnames)+2  ) )
+
+  if(!is.null(varnames)){
+    colnames(contributors) <- c("glottosubcode", "contributor", paste(varnames, c("contributor"), sep = "_") )
+  } else {
+    colnames(contributors) <- c("glottosubcode", "contributor")
+  }
+  contributors[,"glottosubcode"] <- glottosubcodes
   contributors
 }
 
@@ -447,7 +549,7 @@ glottocreate_demodata <- function(meta = TRUE){
     demodata <- demo$glottodata
     demo$structure[,"type"] <- c("symm", "factor", "symm")
   } else{
-    demodata <- demo
+    demodata <- demo$glottodata
   }
 
   demodata[,"var001"] <- c("Y", NA, "Y", "N", "N", "N")

@@ -8,7 +8,7 @@
 #' @param space Return spatial object?
 #' @param addfamname Add column with familiy names?
 #' @param addisolates Add column to identify isolates?
-#' @param L1only Keep only L1 languages (remove bookkeeping, unclassifiable, sign languges, etc.).
+#' @param L1only Keep only L1 languages (remove bookkeeping, unclassifiable, sign languages, etc.).
 #' @param addfamsize Add column with family size?
 #' @param addfamsizerank Add column with family size rank?
 #'
@@ -25,7 +25,7 @@ glottobooster <- function(glottologdata = NULL, space = TRUE,
                                 L1only = TRUE,
                                 addfamsize = TRUE, addfamsizerank = TRUE){
   if(is.null(glottologdata)){
-    glottologdata <- glottoget_glottolog()
+    glottologdata <- glottospace::glottolog
   }
   if(addfamname == TRUE){glottologdata <- glottobooster_addfamilyname(glottologdata) }
   if(addisolates == TRUE){glottologdata <- glottobooster_addisolates(glottologdata) }

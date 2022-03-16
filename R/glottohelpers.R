@@ -66,11 +66,11 @@ is_true <- function(x) {
 }
 
 is_dist <- function(object){
-  any(class(object) == "dist")
+  inherits(object, what = "dist" )
 }
 
 is_list <- function(object){
-  any(class(object) == "list")
+  inherits(object, what = "list" )
 }
 
 contrans_tb2df <- function(glottodata){
@@ -138,4 +138,18 @@ unpack <- function(path = NULL){
 printmessage <- function(x)
 {
   message(paste(utils::capture.output(print(x)), collapse = "\n"))
+}
+
+#' Negated in
+#'
+#' Added here to remove dependency on Hmisc
+#'
+#' @noRd
+`%nin%` <- function(a,b){ ! a %in% b}
+
+release_questions <- function() {
+  c(
+    "Have you updated all internal datasets (run functions in data-raw)?",
+    "Did you go outside for a walk?"
+  )
 }

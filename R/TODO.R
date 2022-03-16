@@ -6,7 +6,7 @@
 # install(force = TRUE, args=c("--no-multiarch")) # ALWAYS INSTALL FROM HERE (PACKAGE), NOT FROM OTHER SCRIPT.
 # knit README
 
-# xfun::gsub_dir(dir = "C:/Users/sjnor/surfdrive/PROJECTS_SN/Rpackages/glottospace/R", pattern = "glottofilter_flex", replacement = "glottofilterflex")
+# xfun::gsub_dir(dir = "C:/Users/sjnor/surfdrive/PROJECTS_SN/Rpackages/glottospace/R", pattern = "glottoget_cldf", replacement = "glottoget_cldf")
 
 # Add test for each user function.
 # https://r-pkgs.org/tests.html

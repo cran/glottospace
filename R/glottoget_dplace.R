@@ -1,22 +1,40 @@
-# EApath <- "D:/Linguistic/D-PLACE/dplace-data-v2.2.0/D-PLACE-dplace-data-541f9f8/datasets/EA/"
-# https://zenodo.org/record/5554412
-#
-# # variables <- read.csv(paste0(EApath, "variables.csv"))
-# eadata <- read.csv(paste0(EApath, "data.csv"))
-# eadata <- eadata %>% select(soc_id, var_id, code)
-# eadata <-  tidyr::spread(data = eadata, key = "var_id", value = "code")
-# eatb <- as_tibble(eadata)
-#
-# socdf <- read.csv(paste0(EApath, "societies.csv"))
-# soctb <- as_tibble(socdf)
-#
-# dplace <- left_join(soctb, eatb, by = c("id" = "soc_id"))
-# # gcea <- c("glottocode", "id", grep(colnames(dplace), pattern = "EA", value = TRUE) )
-# #
-# # dplace <- dplace[, gcea] %>% rename(soc_id = id)
-#
-# gcea <- c("glottocode", grep(colnames(dplace), pattern = "EA", value = TRUE) )
-#
-# dplace <- dplace[, gcea]
-#
-# write.xlsx(dplace, 'data/dplace_ea.xlsx')
+#' #' Get DPLACE data
+#' #'
+#' #' This function loads the DPLACE data that is distributed with glottospace or optionally downloads it.
+#' #' type ?dplace for more information about the version, and how to cite the data.
+#' #'
+#' #' @param dirpath Path to directory where D-PLACE cldf data is stored
+#' #'
+#' #' @noRd
+#' #' @examples
+#' #' \donttest{
+#' #' glottoget_dplace()
+#' #' }
+#' glottoget_dplace <- function(download = NULL, dirpath = NULL, valuenames = NULL, paramnames = NULL){
+#'   if(is.null(download)){
+#'     download <- FALSE
+#'   }
+#'   if(download == FALSE & is.null(dirpath)) {
+#'     out <- glottospace::dplace
+#'   } else if(download == FALSE & !is.null(dirpath)){
+#'     out <- glottoget_cldf(dirpath = dirpath, valuenames = valuenames, paramnames = paramnames)
+#'   } else if(download == TRUE){
+#'     out <- glottoget_dplacedownload(dirpath = dirpath, valuenames = valuenames, paramnames = paramnames)
+#'   }
+#'   return(out)
+#' }
+#'
+#' #' Download WALS data from zenodo, and select relevant data from cldf data
+#' #'
+#' #' @param dirpath Path to directory where D-PLACE cldf data is stored
+#' #'
+#' #' @noRd
+#' #'
+#' glottoget_dplacedownload <- function(dirpath = NULL, valuenames = NULL, paramnames = NULL){
+#'   invisible(readline(prompt="Are you sure you want to download DPLACE data? \n Press [enter] to continue"))
+#'   dirpath <- glottoget_zenodo(name = "dplace", dirpath = dirpath)
+#'   glottoget_cldf(dirpath = dirpath, valuenames = valuenames, paramnames = paramnames)
+#' }
+#'
+#'
+#'

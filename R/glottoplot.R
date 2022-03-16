@@ -3,17 +3,22 @@
 #'
 #' This function offers different types of visualizations for linguistic data and linguistic distances.
 #'
-#' @param type The type of plot: "heatmap", "nmds", or "stress". Default is heatmap if nothing is provided.
+#' @param type The type of plot: "heatmap", "nmds", or "missing". Default is heatmap if nothing is provided.
 #' @param glottodata glottodata table
 #' @param glottodist A dist object created with \code{\link{glottodist}}
-#' @param k Number of dimensions. Either 2 or 3 for nmds.
-#' @param rm.na Whether na's should be removed (default is FALSE)
 #' @param color glottovar to be used to color features (optional). Run glottovars() to see the options.
 #' @param label glottovar to be used to label features (optional). Run glottovars() to see the options.
 #' @param ptsize Size of points between 0 and 1 (optional)
 #' @param filename Optional filename if output should be saved.
+#' @param palette Name of color palette, use glottocolpal("all") to see the options
+#' @param glottonmds A glottonmds object created with \code{\link{glottonmds}}
+#' @param k Number of dimensions. Either 2 or 3 for nmds.
+#' @param rm.na Whether na's should be removed (default is FALSE)
+#' @param row2id In case of nmds, specify what each row contains (either 'glottocode' or 'glottosubcode')
+#' @param preventoverlap For nmds with 2 dimensions, should overlap between data points be prevented?
+#' @param alpha For nmds with 2 dimensions: Transparency of points between 0 (very transparent) and 1 (not transparent)
 #'
-#' @return a visualization of a glotto(sub)data or glottodist object, which can be saved with glottosave()
+#' @return a visualization of a glotto(sub)data, glottodist or glottonmds object, which can be saved with glottosave()
 #' @export
 #'
 #' @examples
@@ -21,15 +26,22 @@
 #' # Plot glottodist as nmds:
 #' glottodata <- glottoget("demodata", meta = TRUE)
 #' glottodist <- glottodist(glottodata = glottodata)
-#' glottoplot(glottodist = glottodist, type = "nmds", k = 3, color = "family", label = "name")
+#' glottoplot(glottodist = glottodist, type = "nmds",
+#'  k = 3, color = "family", label = "name", row2id = "glottocode")
+#'
+#' # To create a stress/scree plot, you can run:
+#' # goeveg::dimcheckMDS(matrix = as.matrix(glottodist), k = k)
+#'
 #'
 #' # Plot missing data:
 #' glottodata <- glottoget("demodata", meta = TRUE)
 #' glottodata <- glottosimplify(glottodata)
 #' glottoplot(glottodata = glottodata, type = "missing")
 #' }
-glottoplot <- function(glottodata = NULL, glottodist = NULL, type = NULL, k = NULL, rm.na = FALSE,
-                       color = NULL, ptsize = NULL, label = NULL, filename = NULL){
+glottoplot <- function(glottodata = NULL, glottodist = NULL, type = NULL, glottonmds = NULL,
+                       color = NULL, ptsize = NULL, label = NULL, filename = NULL, palette = NULL,
+                       k = NULL, rm.na = FALSE, row2id = NULL,
+                       preventoverlap = FALSE, alpha = NULL){
   if(is.null(type)){type <- "heatmap"}
   if(is_dist(glottodata)){
     glottodist <- glottodata
@@ -39,110 +51,61 @@ glottoplot <- function(glottodata = NULL, glottodist = NULL, type = NULL, k = NU
   }
 
   if(type == "heatmap"){
-    plot <- glottoplot_heatmap(glottodist = glottodist, filename = filename)
+    glottoplot_heatmap(glottodist = glottodist, filename = filename)
   }
 
-  if(type == "nmds"){
-    if(is.null(k)){stop("Please specify k (number of dimensions)")}
-    glottonmds <- glottonmds(glottodist = glottodist, k = k, rm.na = rm.na)
-    scores <- glottonmds_scores(glottonmds)
-    scoresdata <- glottojoin_base(scores)
-    plot <- glottoplot_nmds(nmds = glottonmds, scoresdata = scoresdata,
-                    color = color, ptsize = ptsize, label = label, filename = filename)
+  if(!is.null(glottonmds)){
+    glottoplot_nmds(glottonmds = glottonmds,
+                    color = color, ptsize = ptsize, label = label, palette = palette, filename = filename, preventoverlap = preventoverlap, alpha = alpha)
   }
 
-  if(type == "stress"){
-    plot <- glottoplot_nmds_stress(glottodist = glottodist, k = k)
+  if(type == "nmds" & !is.null(glottodist)){
+    glottonmds <- glottonmds(glottodist = glottodist, k = k, rm.na = rm.na, row2id = row2id)
+    glottoplot_nmds(glottonmds = glottonmds,
+                    color = color, ptsize = ptsize, label = label, palette = palette, filename = filename, preventoverlap = preventoverlap, alpha = alpha)
   }
 
   if(type == "missing"){
-    plot <- glottoplot_naviewer(data = glottodata, id = "glottocode")
-  }
-plot
-}
-
-#' Nonmetric Multidimensional Scaling
-#'
-#' @param k Number of dimensions
-#' @param dist dist object or distance matrix
-#' @param rm.na Whether NAs should be removed (default is FALSE)
-#' @family <glottoplot>
-#'
-#' @noRd
-#'
-#' @examples
-#' glottodata <- glottoget("demodata", meta = TRUE)
-#' glottodist <- glottodist(glottodata = glottodata)
-#' glottonmds <- glottonmds(glottodist = glottodist, k = 2)
-glottonmds <- function(glottodist, k = 2, rm.na = FALSE){
-  distmat <- contransform_distmat(glottodist)
-
-  if(rm.na == TRUE){
-    rowna <- rowSums(is.na(distmat))
-    colna <- colSums(is.na(distmat))
-
-    rmcol <- which(colSums(is.na(distmat)) > min(colna))
-    rmrow <- which(rowSums(is.na(distmat)) > min(rowna))
-
-    if(!purrr::is_empty(rmcol)){  distmat <- distmat[,-rmcol] }
-    if(!purrr::is_empty(rmrow)){  distmat <- distmat[-rmrow,] }
+    glottoplot_naviewer(data = glottodata, id = "glottocode")
   }
 
-  vegan::metaMDS(comm = distmat, k = k)
-  # Default is to use the monoMDS function in vegan, but also possible to use isoMDS of MASS.
-  # If you supply a distance structure to metaMDS, it will be used as such and argument method is ignored.
-  # https://github.com/vegandevs/vegan/issues/330
-
 }
 
-#' Get nmds scores
-#'
-#' Obtain nmds scores of a glottonmds object
-#'
-#' @param glottonmds a glottonmnds object created with glottonmds_run()
-#'
-#'
-#' @noRd
-#' @family <glottoplot>
-#'
-#' @examples
-#' \dontrun{
-#' glottonmds_scores(glottonmds)
-#' }
-glottonmds_scores <- function(glottonmds){
-  scores <- as.data.frame(vegan::scores(glottonmds))
-  scores <- tibble::rownames_to_column(scores, "glottocode")
-  scores
-}
 
-#' Plot nmds in 3d
+
+#' Plot nmds in 2d or 3d
 #'
-#' @param nmds An nmds object
-#' @param scoresdata scoresdata
+#' @param glottonmds An glottonmds object
 #' @param color color
 #' @param ptsize ptsize
 #' @param label label
+#' @param palette color palette
+#' @param preventoverlap Only for 2d plots, Should overlap between data point be prevented?
 #' @param filename optional filename if output should be saved.
+#' @param alpha Transparency of points between 0 (very transparent) and 1 (not transparent)
+#'
 #' @noRd
 #'
 #' @examples
 #' glottodata <- glottoget("demodata", meta = TRUE)
 #' glottodist <- glottodist(glottodata = glottodata)
-#' nmds <- glottonmds(glottodist, k = 2)
-#' scores <- glottonmds_scores(nmds)
-#' scoresdata <- glottojoin_base(scores)
+#' glottonmds <- glottonmds(glottodist, k = 2)
 #'
-#' glottoplot_nmds(nmds = nmds, scoresdata = scoresdata, color = "family", ptsize = "isolate")
-#' glottoplot_nmds(nmds = nmds, scoresdata = scoresdata, color = "isolate")
-glottoplot_nmds <- function(nmds, scoresdata, color = NULL, ptsize = NULL, label = NULL, filename = NULL){
+#' glottoplot_nmds(glottonmds = glottonmds, color = "family", ptsize = "isolate")
+#' glottoplot_nmds(glottonmds = glottonmds, color = "isolate")
+glottoplot_nmds <- function(glottonmds, color = NULL, ptsize = NULL, label = NULL, palette = NULL, filename = NULL, preventoverlap = FALSE, alpha = NULL){
+
+  nmds <- glottonmds[[1]]
+  scoresdata <- glottonmds[[2]]
 
   if(nmds$ndim == 2){
-    glottoplot_nmds_2d(nmds = nmds, scoresdata = scoresdata, color = color, ptsize = ptsize, label = label, filename = filename)
+    glottoplot_nmds_2d(nmds = nmds, scoresdata = scoresdata, color = color, ptsize = ptsize, label = label, filename = filename, preventoverlap = preventoverlap, alpha = alpha)
   }
 
   if(nmds$ndim == 3){
-    glottoplot_nmds_3d(nmds = nmds, scoresdata = scoresdata, color = color, ptsize = ptsize, label = label, filename = filename)
+    glottoplot_nmds_3d(nmds = nmds, scoresdata = scoresdata, color = color, ptsize = ptsize, label = label, palette = palette, filename = filename)
   }
+
 }
 
 #' Plot nmds in 2d
@@ -152,32 +115,57 @@ glottoplot_nmds <- function(nmds, scoresdata, color = NULL, ptsize = NULL, label
 #' @param color color
 #' @param ptsize ptsize
 #' @param label label
+#' @param preventoverlap Should overlap between data points be avoided?
 #' @param filename optional filename if output should be saved.
+#' @param alpha Transparency of points between 0 (very transparent) and 1 (not transparent)
+#'
 #' @noRd
 #'
 #'
 #' @examples
 #' glottodata <- glottoget("demodata", meta = TRUE)
 #' glottodist <- glottodist(glottodata = glottodata)
-#' nmds <- glottonmds(glottodist, k = 2)
+#' nmds <- glottonmds_run(glottodist, k = 2)
 #' scores <- glottonmds_scores(nmds)
 #' scoresdata <- glottojoin_base(scores)
 #'
 #' glottoplot_nmds_2d(nmds = nmds, scoresdata = scoresdata, color = "family", ptsize = "isolate")
 #' glottoplot_nmds_2d(nmds = nmds, scoresdata = scoresdata, color = "isolate")
-glottoplot_nmds_2d <- function(nmds, scoresdata, color = NULL, ptsize = NULL, label = NULL, filename = NULL){
+glottoplot_nmds_2d <- function(nmds, scoresdata, color = NULL, ptsize = NULL, label = NULL, filename = NULL, alpha = NULL, preventoverlap = FALSE){
 
-    nmdsplot <- ggplot2::ggplot(data = scoresdata, ggplot2::aes_string(x="NMDS1",y="NMDS2", col = color, size = ptsize)) +
+  scoresdata <- glottosimplify(scoresdata)
+   duplo <- sum(duplicated(scoresdata[,c("NMDS1", "NMDS2")]) | duplicated(scoresdata[,c("NMDS1", "NMDS2")], fromLast = TRUE))
+  if(duplo != 0 & preventoverlap == FALSE){
+    message(paste0("Due to overlap, not all of the ", nrow(scoresdata), " datapoints are visible \n"))
+    message(paste0("You might consider specifying preventoverlap = TRUE \n"))
+  }
+if(preventoverlap == FALSE){
+  if(is.null(alpha)){alpha <- 1}
+    nmdsplot <- ggplot2::ggplot(data = scoresdata, ggplot2::aes_string(x="NMDS1",y="NMDS2", col = color, size = ptsize, alpha = alpha)) +
       ggplot2::geom_point() +
       {if(!is.null(label))ggplot2::geom_text(ggplot2::aes_string(label = label), hjust = 0, vjust = 0, show.legend = FALSE)} +
       # {if(ellipse)ggplot2::stat_ellipse(type="t", level = 0.95, show.legend = FALSE, alpha = 0.5, size = 0.75, linetype = 2)} +
       ggplot2::coord_equal()+
       ggplot2::labs(title = paste0("NMDS (k = ", nmds$ndim, ", stress = ", round(nmds$stress, 2), ")"), x = "NMDS1", y = "NMDS2") +
       ggplot2::theme_bw()
+} else{
+  if(is.null(alpha)){alpha <- .3}
+  nmdsplot <- ggplot2::ggplot(data = scoresdata, ggplot2::aes_string(x="NMDS1",y="NMDS2", col = color, size = ptsize, alpha = alpha)) +
+    ggplot2::geom_point(position = ggplot2::position_jitter(width = 0.01, height = 0.01, seed = 22)) +
+    {if(!is.null(label))ggplot2::geom_text(position = ggplot2::position_jitter(width = 0.01, height = 0.01, seed = 22), ggplot2::aes_string(label = label), hjust = 0, vjust = 0, show.legend = FALSE)} +
+    # {if(ellipse)ggplot2::stat_ellipse(type="t", level = 0.95, show.legend = FALSE, alpha = 0.5, size = 0.75, linetype = 2)} +
+    ggplot2::coord_equal()+
+    ggplot2::labs(title = paste0("NMDS (k = ", nmds$ndim, ", stress = ", round(nmds$stress, 2), ")"), x = "NMDS1", y = "NMDS2") +
+    ggplot2::theme_bw()
+}
 
-      if(!is.null(filename)){ggplot2::ggsave(plot = nmdsplot, filename = filename)}
 
-      print(nmdsplot)
+
+      if(!is.null(filename)){
+        if( tools::file_ext(filename) == "" ){filename <- paste0(filename, ".png")}
+        ggplot2::ggsave(plot = nmdsplot, filename = filename)
+        }
+    print(nmdsplot)
 
 }
 
@@ -195,19 +183,29 @@ glottoplot_nmds_2d <- function(nmds, scoresdata, color = NULL, ptsize = NULL, la
 #' @examples
 #' glottodata <- glottoget("demodata", meta = TRUE)
 #' glottodist <- glottodist(glottodata = glottodata)
-#' nmds <- glottonmds(glottodist, k = 3)
+#' nmds <- glottonmds_run(glottodist, k = 3)
 #' scores <- glottonmds_scores(nmds)
 #' scoresdata <- glottojoin_base(scores)
 #'
 #' glottoplot_nmds_3d(nmds = nmds, scoresdata = scoresdata, color = "family", label = "name")
 #' glottoplot_nmds_3d(nmds = nmds, scoresdata = scoresdata, color = "isolate")
-glottoplot_nmds_3d <- function(nmds, scoresdata, color = NULL, ptsize = NULL, label = NULL, filename = NULL){
+glottoplot_nmds_3d <- function(nmds, scoresdata, color = NULL, ptsize = NULL, label = NULL, palette = NULL, filename = NULL){
+  rlang::check_installed("plotly", reason = "to use `glottoplot_nmds_3d()`")
+  scoresdata <- glottosimplify(scoresdata)
+
   if(is.null(color)){
     color <- "allsame"
     scoresdata$allsame <- "allsame"
   }
 
-  nmdsplot <- plotly::plot_ly(type="scatter3d", mode="markers")
+  if(is.null(palette)){
+    palette = "turbo"
+  }
+
+  colpal <- glottocolpal(palette = palette, ncolr = length(unique(scoresdata[[color]])) )
+  # colpal[as.factor(scoresdata[[color]])]
+
+  nmdsplot <- plotly::plot_ly(type="scatter3d", mode="markers", colors = colpal)
   for (i in unique(scoresdata[[color]])) {
 
     nmdsplot <- plotly::add_trace(nmdsplot,
@@ -234,15 +232,12 @@ glottoplot_nmds_3d <- function(nmds, scoresdata, color = NULL, ptsize = NULL, la
     ) )
 
 
-  if(!is.null(filename)){htmlwidgets::saveWidget(nmdsplot, title = "NMDS 3D", filename)}
+  if(!is.null(filename)){
+    if( tools::file_ext(filename) == "" ){filename <- paste0(filename, ".html")}
+    rlang::check_installed("htmlwidgets", reason = "to save a 3D nmdsplot")
+    htmlwidgets::saveWidget(nmdsplot, title = "NMDS 3D", filename)
+    }
   print(nmdsplot)
-}
-
-
-glottoplot_nmds_stress <- function(glottodist, k = NULL){
-  if(is.null(k)){k <- 6}
-  distmat <- as.matrix(glottodist)
-  goeveg::dimcheckMDS(matrix = distmat, k = k)
 }
 
 #' Plot a heatmap of a distance matrix
@@ -271,7 +266,10 @@ glottoplot_heatmap <- function(glottodist, filename = NULL){
     ggplot2::labs(x = "glottocode", y = "glottocode") +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, hjust=1))
 
-  if(!is.null(filename)){ggplot2::ggsave(plot = heatmap, filename = filename)}
+  if(!is.null(filename)){
+    if( tools::file_ext(filename) == "" ){filename <- paste0(filename, ".png")}
+    ggplot2::ggsave(plot = heatmap, filename = filename)
+    }
   print(heatmap)
 
 

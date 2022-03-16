@@ -53,7 +53,7 @@ glottomap <- function(glottodata = NULL, color = NULL, label = NULL, type = NULL
 
   if(is.null(glottodata)){
     glottodata <- glottofilter(...)
-    if(mapview::npts(glottodata) == 1 & type == "static"){ #added to solve issue with countries that are not polygons in naturalearthdata (they consist of a single point)
+    if(length(sf::st_geometry(glottodata)) == 1 & type == "static"){ #added to solve issue with countries that are not polygons in naturalearthdata (they consist of a single point)
       # glottodata <- sf::st_buffer(glottodata, dist = 0)
       type <- "dynamic"
       message("The country you are trying to plot is too small for a static map, returning a dynamic map instead.")
@@ -219,17 +219,9 @@ glottomap_static_crs <- function(glottodata, label = NULL, color = NULL, ptsize 
   glottodata_proj <- sf::st_transform(glottodata_wrap, crs = crs)
 
   if(rivers == TRUE){
-    rivers_name <- 'ne_10m_rivers_lake_centerlines'
-    rivers_path <- glottofiles_makepath(paste0(rivers_name, ".shp"))
-    if(file.exists(rivers_path)){
-      rivers10 <- rnaturalearth::ne_load(scale = 10, type = 'rivers_lake_centerlines',
-                                                              category = 'physical', returnclass = "sf",
-                                                              destdir = glottofiles_cachedir())
-    } else {
+      invisible(readline(prompt="Are you sure you want to download rivers from naturalearth? \n Press [enter] to continue"))
       rivers10 <- rnaturalearth::ne_download(scale = 10, type = 'rivers_lake_centerlines',
-                                                            category = 'physical', returnclass = "sf",
-                                                            destdir = glottofiles_cachedir())
-    }
+                                                            category = 'physical', returnclass = "sf")
      rivers_proj <- sf::st_transform(rivers10, crs = crs)
   }
 
@@ -284,18 +276,11 @@ glottomap_static_pacific <- function(glottodata, color = NULL, rivers = FALSE, p
   world_robinson <- sf::st_transform(world2,
                                      crs = '+proj=robin +lon_0=180 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs')
 
+
   if(rivers == TRUE){
-    rivers_name <- 'ne_10m_rivers_lake_centerlines'
-    rivers_path <- glottofiles_makepath(paste0(rivers_name, ".shp"))
-    if(file.exists(rivers_path)){
-      rivers10 <- rnaturalearth::ne_load(scale = 10, type = 'rivers_lake_centerlines',
-                                         category = 'physical', returnclass = "sf",
-                                         destdir = glottofiles_cachedir())
-    } else {
-      rivers10 <- rnaturalearth::ne_download(scale = 10, type = 'rivers_lake_centerlines',
-                                             category = 'physical', returnclass = "sf",
-                                             destdir = glottofiles_cachedir())
-    }
+    invisible(readline(prompt="Are you sure you want to download rivers from naturalearth? \n Press [enter] to continue"))
+    rivers10 <- rnaturalearth::ne_download(scale = 10, type = 'rivers_lake_centerlines',
+                                           category = 'physical', returnclass = "sf")
     rivers10 <- suppressWarnings(rivers10 %>% sf::st_difference(polygon) )
   }
 

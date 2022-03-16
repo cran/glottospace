@@ -1,5 +1,5 @@
 #'
-#' This is an internally stored version of glottolog data. It is included in the package as a fall-back option in case there is no internet connection.
+#' This is an internally stored version of glottolog data. Use glottoget("glottolog", download = TRUE) to download the latest version
 #' @keywords internal
 #' @format A data frame with XX rows and XX variables:
 #' \describe{
@@ -20,11 +20,12 @@
 #' }
 #' @source \url{https://glottolog.org/
 #' }
+#' @evalRd glottoget_remotemeta(name = "glottolog")
 "glottolog"
 
 #' WALS data
 #'
-#' This is an internally stored version of WALS data. It is included in the package as a fall-back option in case there is no internet connection.
+#' This is an internally stored version of WALS data. Use glottoget("wals", download = TRUE) to download the latest version
 #' @keywords internal
 #' @format A data frame with XX rows and XX variables:
 #' \describe{
@@ -240,4 +241,5 @@
 #' }
 #' @source \url{https://wals.info/
 #' }
+#' @evalRd glottoget_remotemeta(name = "wals")
 "wals"

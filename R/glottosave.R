@@ -17,7 +17,6 @@
 #' \donttest{
 #' glottodata <- glottoget("demodata", meta = FALSE)
 #' # Saves as .xlsx
-#' glottosave(glottodata, filename = "glottodata")
 #' glottosave(glottodata, filename = file.path(tempdir(), "glottodata") )
 #'
 #' glottospacedata <- glottospace(glottodata)
@@ -51,7 +50,7 @@ glottosave <- function(glottodata, filename = NULL){
       }
       writexl::write_xlsx(glottodata, path = filename) # works better than openxlsx, which sometimes omits columns..
       message(paste("Glottodata (glottodata) saved as", normalizePath(filename) ))
-  } else if((class(glottodata) == "tmap")[1]){
+  } else if(inherits(glottodata, what = "tmap")){
     if( tools::file_ext(filename) == "" ){
     ifelse(getOption("tmap.mode") == "plot", filename <- paste0(filename, ".png"), filename <- paste0(filename, ".html"))
     }
@@ -66,19 +65,23 @@ glottosave <- function(glottodata, filename = NULL){
                append = FALSE)
     }
     message(paste0("Spatial object (sf) saved as ", normalizePath(filename) ))
-  } else if(any(class(glottodata) == "matrix" ) ){
+  } else if(inherits(glottodata, what = "matrix")){
     if( tools::file_ext(filename) == "" ){
     utils::write.csv(glottodata, file = paste0(filename, ".csv"))
     } else {
       utils::write.csv(glottodata, file = filename)
     }
     message(paste0("Matrix saved as ", normalizePath(filename) ))
-  } else if(class(glottodata) == "data.frame"){
+  } else if(inherits(glottodata, what = c("gg", "ggplot")) ){
+    if( tools::file_ext(filename) == "" ){filename <- paste0(filename, ".png")}
+    ggplot2::ggsave(plot = glottodata, filename = filename)
+    message(paste0("Plot saved as ", normalizePath(filename) ))
+  } else if(inherits(glottodata, what = "data.frame")){
     if( tools::file_ext(filename) == "" ){filename <- paste0(filename, ".xlsx")}
     writexl::write_xlsx(glottodata, path = filename) # works better than openxlsx, which omits some columns..
     message(paste0("Data.frame saved as ", normalizePath(filename) ))
   } else(
-    message("Could not detect object type. Please convert glottodata to a supported object type.")
+    message("Could not detect object type. Please convert glottodata to a supported object type. In case you attempt to save the output of glottoplot() or glottomap, you can try to save it by specifying the filename argument in those functions directly. ")
   )
 
 }

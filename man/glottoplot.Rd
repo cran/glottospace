@@ -8,12 +8,17 @@ glottoplot(
   glottodata = NULL,
   glottodist = NULL,
   type = NULL,
-  k = NULL,
-  rm.na = FALSE,
+  glottonmds = NULL,
   color = NULL,
   ptsize = NULL,
   label = NULL,
-  filename = NULL
+  filename = NULL,
+  palette = NULL,
+  k = NULL,
+  rm.na = FALSE,
+  row2id = NULL,
+  preventoverlap = FALSE,
+  alpha = NULL
 )
 }
 \arguments{
@@ -21,11 +26,9 @@ glottoplot(
 
 \item{glottodist}{A dist object created with \code{\link{glottodist}}}
 
-\item{type}{The type of plot: "heatmap", "nmds", or "stress". Default is heatmap if nothing is provided.}
+\item{type}{The type of plot: "heatmap", "nmds", or "missing". Default is heatmap if nothing is provided.}
 
-\item{k}{Number of dimensions. Either 2 or 3 for nmds.}
-
-\item{rm.na}{Whether na's should be removed (default is FALSE)}
+\item{glottonmds}{A glottonmds object created with \code{\link{glottonmds}}}
 
 \item{color}{glottovar to be used to color features (optional). Run glottovars() to see the options.}
 
@@ -34,9 +37,21 @@ glottoplot(
 \item{label}{glottovar to be used to label features (optional). Run glottovars() to see the options.}
 
 \item{filename}{Optional filename if output should be saved.}
+
+\item{palette}{Name of color palette, use glottocolpal("all") to see the options}
+
+\item{k}{Number of dimensions. Either 2 or 3 for nmds.}
+
+\item{rm.na}{Whether na's should be removed (default is FALSE)}
+
+\item{row2id}{In case of nmds, specify what each row contains (either 'glottocode' or 'glottosubcode')}
+
+\item{preventoverlap}{For nmds with 2 dimensions, should overlap between data points be prevented?}
+
+\item{alpha}{For nmds with 2 dimensions: Transparency of points between 0 (very transparent) and 1 (not transparent)}
 }
 \value{
-a visualization of a glotto(sub)data or glottodist object, which can be saved with glottosave()
+a visualization of a glotto(sub)data, glottodist or glottonmds object, which can be saved with glottosave()
 }
 \description{
 This function offers different types of visualizations for linguistic data and linguistic distances.
@@ -46,7 +61,12 @@ This function offers different types of visualizations for linguistic data and l
 # Plot glottodist as nmds:
 glottodata <- glottoget("demodata", meta = TRUE)
 glottodist <- glottodist(glottodata = glottodata)
-glottoplot(glottodist = glottodist, type = "nmds", k = 3, color = "family", label = "name")
+glottoplot(glottodist = glottodist, type = "nmds",
+ k = 3, color = "family", label = "name", row2id = "glottocode")
+
+# To create a stress/scree plot, you can run:
+# goeveg::dimcheckMDS(matrix = as.matrix(glottodist), k = k)
+
 
 # Plot missing data:
 glottodata <- glottoget("demodata", meta = TRUE)

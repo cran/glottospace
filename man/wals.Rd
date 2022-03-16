@@ -226,6 +226,16 @@ A data frame with XX rows and XX variables:
 wals
 }
 \description{
-This is an internally stored version of WALS data. It is included in the package as a fall-back option in case there is no internet connection.
+This is an internally stored version of WALS data. Use glottoget("wals", download = TRUE) to download the latest version
 }
 \keyword{internal}
+\note{version: v2020.1
+
+
+Cite the source of the dataset as:
+
+
+Dryer, Matthew S. & Haspelmath, Martin (eds.) 2013. The World Atlas of Language Structures Online. Leipzig: Max Planck Institute for Evolutionary Anthropology. (Available online at https://wals.info)
+
+
+##------ Tue Mar 15 11:44:11 2022 ------##}
