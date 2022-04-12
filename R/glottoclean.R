@@ -1,22 +1,39 @@
 
-#' Clean glottodata
+#' Clean glottodata/glottosubdata
 #'
-#' This function is a wrapper around glottorecode. This function has some built in default values that are being recoded.
-#' For example, if column type is 'symm' or 'asymm', values such as "No" and 0 are recoded to FALSE and "?" is recoded to NA.
-#' Use glottorecode directly if you don't want to use these defaults.
+#' This function cleans glottodata/glottosubdata and returns a simplified glottodata/glottosubdata object containing only the cleaned data table and a structure table.
+#'
+#' This function has some built in default values that are being recoded:
+#' For example, if column type is 'symm' or 'asymm', values such as "No" and 0 are recoded to FALSE
+#' Values such as "?" are recoded to NA.
+#'
 #'
 #' @param glottodata glottodata (either a list or a data.frame)
 #' @param tona Optional additional values to recode to NA (besides default)
 #' @param tofalse Optional additional values to recode to FALSE (besides default)
 #' @param totrue Optional additional values to recode to TRUE (besides default)
-#' @param structure Optional structure table (should be provided if glottodata doesn't contain any)
+#' @param id By default, glottoclean looks for a column named 'glottocode', if the id is in a different column, this should be specified.
 #'
-#' @return A cleaned-up version of the original glottodata object (either a list or a data.frame, depending on the input)
+#' @return A cleaned-up and simplified version of the original glottodata object
 #' @export
 #' @examples
 #' glottodata <- glottoget("demodata", meta = TRUE)
 #' glottodata <- glottoclean(glottodata)
-glottoclean <- function(glottodata, structure = NULL, tona = NULL, tofalse = NULL, totrue = NULL){
+#'
+#' glottosubdata <- glottoget("demosubdata", meta = TRUE)
+#' glottosubdata <- glottoclean(glottosubdata)
+glottoclean <- function(glottodata, tona = NULL, tofalse = NULL, totrue = NULL, id = NULL){
+
+  if(sum(!glottocheck_isglottodata(glottodata) | !glottocheck_isglottosubdata(glottodata))==2){
+    stop("glottodata object does not adhere to glottodata/glottosubdata format. Use glottocreate() or glottoconvert().")
+  }
+
+  if(!glottocheck_hasstructure(glottodata) ){
+    stop("structure table not found. You can create one using glottocreate_structuretable() and add it with glottocreate_addtable().")
+  } else{
+    structure <- glottodata[["structure"]]
+    glottodata <- glottosimplify(glottodata)
+  }
 
   all2false <- glottoclean_all2false()
   all2true <- glottoclean_all2true()
@@ -26,21 +43,23 @@ glottoclean <- function(glottodata, structure = NULL, tona = NULL, tofalse = NUL
   if(!is.null(tofalse)){all2false <- c(all2false, tofalse)}
   if(!is.null(totrue)){all2true <- c(all2true, totrue)}
 
-  glottodata <- glottorecode(glottodata = glottodata,
-                structure = structure,
-                tofalse = all2false,
-                totrue = all2true,
-                tona = all2na)
+  glottodata <- glottorecode_logical(glottodata = glottodata, structure = structure, tofalse = all2false, totrue = all2true)
 
-  return(glottodata)
+  glottodata <- glottorecode_missing(glottodata, tona = all2na)
+
+  glottodata <- glottojoin(glottodata, structure)
+
+  glottodata <- contrans_glottoclass(glottodata)
+
+  invisible(glottodata)
 }
 
 glottoclean_all2false <- function(){
-  c("n", "N", "No", "no", "NO", 0, 0.0, "F", "FALSE", "False", "false")
+  c("n", "N", "No", "no", "NO", 0, 0.0, "F", "FALSE", "False", "false", "0", "0.0")
 }
 
 glottoclean_all2true <- function(){
-  c("y", "Y", "Yes", "yes", "YES", 1, 1.0, "T", "TRUE", "True", "true")
+  c("y", "Y", "Yes", "yes", "YES", 1, 1.0, "T", "TRUE", "True", "true", "1", "1.0")
 }
 
 glottoclean_all2na <- function(){
@@ -62,7 +81,7 @@ glottoclean_all2na <- function(){
 #' @examples
 #' glottodata <- glottoget("demodata", meta = TRUE)
 #' glottodata <- glottorecode(glottodata, tona = c("?", "missing"))
-glottorecode <- function(glottodata, structure = NULL, tofalse = NULL, totrue = NULL, tona = NULL){
+glottorecode <- function(glottodata, structure, tofalse = NULL, totrue = NULL, tona = NULL){
 
   if(!is.null(tofalse) | !is.null(totrue)){
     glottodata <- glottorecode_logical(glottodata = glottodata, structure = structure, tofalse = tofalse, totrue = totrue)
@@ -75,34 +94,6 @@ glottorecode <- function(glottodata, structure = NULL, tofalse = NULL, totrue = 
  glottodata
 }
 
-#' Recode missing values to NA
-#'
-#' @param glottodata User-provided glottodata
-#' @param tona Optional, additional values to recode to NA
-#' @family <glottorecode>
-#' @noRd
-#' @examples
-#' glottodata <- glottoget("demodata", meta = TRUE)
-#' glottorecode_missing(glottodata, tona = "?")
-glottorecode_missing <- function(glottodata, tona){
-
-  if(glottocheck_isglottodata(glottodata)){
-    splitted <- glottosplitmergemeta(glottodata)
-    glottodata <- splitted[[1]]
-  } else{
-    splitted <- NULL
-  }
-
-  glottodata <- data.frame(lapply(glottodata, recode_tona, tona = tona))
-
-  message("Missing values recoded to NA \n")
-
-  if(!is.null(splitted)){
-    glottodata <- glottosplitmergemeta(glottodata = glottodata, splitted = splitted)
-  }
-  glottodata
-}
-
 #' Recode character columns to TRUE/FALSE
 #'
 #' @param structure structure table
@@ -113,48 +104,61 @@ glottorecode_missing <- function(glottodata, tona){
 #' @noRd
 #' @examples
 #' glottodata <- glottoget("demodata", meta = TRUE)
-#' glottorecode_logical(glottodata, totrue = c("y", "Y", 1), tofalse = c("n", "N", 0))
-glottorecode_logical <- function(glottodata, structure = NULL, totrue = NULL, tofalse = NULL){
-  # maybe better to do with tribble lookup table https://r-pkgs.org/package-within.html
-  # tribble lookup could be used for a function recodefact (factors)
-  # other approach could be used for a funciton recodenum (numeric)
+#' glottorecode_logical(glottodata, totrue = c("y", "Y", 1), tofalse = c("n", "N", 0), structure = glottodata[["structure"]])
+#'
+#' glottosubdata <- glottoget("demosubdata", meta = TRUE)
+#' glottorecode_logical(glottosubdata, totrue = c("y", "Y", 1), tofalse = c("n", "N", 0), structure = glottosubdata[["structure"]])
+glottorecode_logical <- function(glottodata, structure, totrue = NULL, tofalse = NULL){
 
-  if(!glottocheck_hasstructure(glottodata) & is.null(structure)){
-    stop("Please provide a structure table with at least a type column. Run glottocreate_structuretable() to create it.")
-  } else if(glottocheck_hasstructure(glottodata) & is.null(structure)){
-    structure <- glottodata[["structure"]]
-  }
-
+  data <- glottosimplify(glottodata)
 
   types <- structure$type
   cbinary <- structure$varname[which(types == "asymm" | types == "symm")]
 
-  if(glottocheck_isglottodata(glottodata)){
-    data <- glottodata[["glottodata"]]
-    gdstructure <- TRUE
-  } else if(glottocheck_isglottosubdata(glottodata)){
-    message("not yet supported. Run glottojoin() first")
-    gdstructure <- FALSE
-  } else{
-    data <- glottodata
-    gdstructure <- FALSE
-  }
-
-
-  if(!is.null(cbinary)){
+  if(!purrr::is_empty(cbinary)){
     bindat <- data[, cbinary]
+    # Prepare message about what will be converted:
+      allevmat <- sapply(lapply(bindat, as.factor), levels)
+      allevuniq <- unique(unlist(allevmat))
+      notlog <- allevuniq[allevuniq %nin% c(totrue, tofalse)]
+      if(!purrr::is_empty(notlog)){
+        message("\n\n For some variables of type 'symm' and 'asymm' it is unclear whether they are TRUE or FALSE. \n If you do want to convert them, you should specify 'totrue' and 'tofalse'. \n\n The following values are not converted to TRUE or FALSE, but are set to NA:")
+        printmessage(paste(notlog, collapse = ", "))
+        bindat <- recode_df(data = bindat, old = notlog, new = NA)
+      }
     if(!is.null(totrue)){bindat <- recode_df(data = bindat, old = totrue, new = TRUE) }
     if(!is.null(tofalse)){bindat <- recode_df(data = bindat, old = tofalse, new = FALSE) }
     bindat <- apply(bindat, 2, as.logical)
     data[, cbinary] <- bindat
     message("Values in binary columns (symm/asymm) recoded to TRUE/FALSE \n")
   }
-  if(gdstructure == TRUE){
-  glottodata[["glottodata"]] <- data
+  data
+}
+
+#' Recode missing values to NA
+#'
+#' @param glottodata glottodata
+#' @param tona Optional, additional values to recode to NA
+#' @family <glottorecode>
+#' @noRd
+#' @examples
+#' glottodata <- glottoget("demodata", meta = TRUE)
+#' glottorecode_missing(glottodata, tona = "?")
+#'
+#' glottosubdata <- glottoget("demosubdata", meta = TRUE)
+#' glottorecode_missing(glottosubdata, tona = "?")
+glottorecode_missing <- function(glottodata, tona){
+
+  glottodata <- glottosimplify(glottodata)
+
+  glottocols <- colnames(glottodata)
+  glottodata <- data.frame(lapply(glottodata, recode_tona, tona = tona)) # As a side-effect, this drops row names, and changes colnames
+  colnames(glottodata) <- glottocols
+
+
+  message("Missing values recoded to NA \n")
+
   glottodata
-  } else {
-    data
-  }
 }
 
 #' Fix colnames of excel files in which colnames refer to another cell

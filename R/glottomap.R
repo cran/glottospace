@@ -51,14 +51,18 @@ glottomap <- function(glottodata = NULL, color = NULL, label = NULL, type = NULL
   palette <- glottocolpal(palette = palette)
   if(is.null(type)){type <- "static"}
 
-  if(is.null(glottodata)){
+  if(!is.null(glottodata)){
+    if(!is_sf(glottodata) ) {
+      glottodata <- glottosimplify(glottodata)
+      glottodata <- glottojoin_base(glottodata)
+    }
+  } else {
     glottodata <- glottofilter(...)
     if(length(sf::st_geometry(glottodata)) == 1 & type == "static"){ #added to solve issue with countries that are not polygons in naturalearthdata (they consist of a single point)
       # glottodata <- sf::st_buffer(glottodata, dist = 0)
       type <- "dynamic"
       message("The country you are trying to plot is too small for a static map, returning a dynamic map instead.")
     }
-
   }
 
   if(!is.null(color) ){
@@ -70,11 +74,6 @@ glottomap <- function(glottodata = NULL, color = NULL, label = NULL, type = NULL
 
   if(is.null(lbsize) & type == "static"){lbsize <- 0.75}
   if(!is.null(lbsize) & type == "dynamic"){lbsize <- NULL}
-
-  if(!is_sf(glottodata) ) {glottodata <- glottojoin_space(glottodata)}
-
-
-
 
   if(type == "dynamic"){
     map <- glottomap_dynamic(glottodata = glottodata, label = label, color = color, ptsize = ptsize, alpha = alpha, palette = palette, nclass = nclass, numcat = numcat)

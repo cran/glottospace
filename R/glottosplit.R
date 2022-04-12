@@ -20,7 +20,8 @@ glottosplitmergemeta <- function(glottodata, splitted = NULL){
     splitted <- glottosplit(glottodata)
     return(splitted)
   } else {
-    if(any(!is.na(splitted[[2]]))){glottojoin(glottodata = glottodata, with = splitted[[2]])
+    if(any(!is.na(splitted[[2]]))){
+      glottojoin(glottodata = glottodata, with = splitted[[2]])
     } else {
       glottodata
     }
@@ -44,9 +45,10 @@ glottosplitmergemeta <- function(glottodata, splitted = NULL){
 glottosplit <- function(glottodata){
 
   glottosplit <- vector(mode = "list", length = 2)
-  names(glottosplit) <- c("glottodata", "metadata")
+
 
   if(glottocheck_isglottodata(glottodata)){
+    names(glottosplit) <- c("glottodata", "metadata")
       if(glottocheck_hasmeta(glottodata) ){
         glottosplit[[1]] <- glottodata[["glottodata"]]
         glottosplit[[2]] <- glottodata[names(glottodata) != "glottodata"]
@@ -55,10 +57,16 @@ glottosplit <- function(glottodata){
         glottosplit[[2]] <- NA
       }
   } else if (glottocheck_isglottosubdata(glottodata)){
-    metatables <- names(glottodata) %in% names(glottoget("demodata", meta = TRUE))[-1]
+    names(glottosplit) <- c("glottosubdata", "metadata")
+    metatables <- names(glottodata) %in% names(glottocreate_metadatatables())
     if(glottocheck_hasmeta(glottodata) ){
+      if(sum(!metatables) == 1 & all(names(glottodata)[!metatables] == "glottosubdata")){
+        glottosplit[[1]] <- glottodata[["glottosubdata"]]
+        glottosplit[[2]] <- glottodata[metatables]
+      } else{
         glottosplit[[1]] <- glottodata[!metatables]
         glottosplit[[2]] <- glottodata[metatables]
+      }
     } else {
         glottosplit[[1]] <- glottodata[!metatables]
         glottosplit[[2]] <- NA

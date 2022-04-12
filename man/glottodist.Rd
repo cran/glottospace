@@ -4,14 +4,10 @@
 \alias{glottodist}
 \title{Calculate distances between languages}
 \usage{
-glottodist(glottodata, structure = NULL, id = NULL)
+glottodist(glottodata)
 }
 \arguments{
 \item{glottodata}{glottodata or glottosubdata, either with or without structure table.}
-
-\item{structure}{If glottodata is a table without a structure table, you can add it separately. To create a structure table, you should run glottocreate_structuretable() and you can add it with glottocreate_addtable()}
-
-\item{id}{By default, glottodist looks for a column named 'glottocode', if the id is in a different column, this should be specified.}
 }
 \value{
 object of class \code{dist}
@@ -22,4 +18,8 @@ Calculate distances between languages
 \examples{
 glottodata <- glottoget("demodata", meta = TRUE)
 glottodist <- glottodist(glottodata = glottodata)
+
+glottosubdata <- glottoget("demosubdata", meta = TRUE)
+glottodist <- glottodist(glottodata = glottosubdata)
+
 }

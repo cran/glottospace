@@ -6,8 +6,8 @@
 #' @param type The type of plot: "heatmap", "nmds", or "missing". Default is heatmap if nothing is provided.
 #' @param glottodata glottodata table
 #' @param glottodist A dist object created with \code{\link{glottodist}}
-#' @param color glottovar to be used to color features (optional). Run glottovars() to see the options.
-#' @param label glottovar to be used to label features (optional). Run glottovars() to see the options.
+#' @param color Name of variable to be used to color features (optional). Run glottovars() to see the options.
+#' @param label Name of variable to be used to label features (optional). Run glottovars() to see the options.
 #' @param ptsize Size of points between 0 and 1 (optional)
 #' @param filename Optional filename if output should be saved.
 #' @param palette Name of color palette, use glottocolpal("all") to see the options
@@ -17,6 +17,12 @@
 #' @param row2id In case of nmds, specify what each row contains (either 'glottocode' or 'glottosubcode')
 #' @param preventoverlap For nmds with 2 dimensions, should overlap between data points be prevented?
 #' @param alpha For nmds with 2 dimensions: Transparency of points between 0 (very transparent) and 1 (not transparent)
+#' @param colorvec Vector specifying colors for individual values and legend
+#'   order (non-matching values are omitted), for example:
+#'   c("Arawakan" = "rosybrown1", "Yucuna"  = "red",
+#'   "Tucanoan" = "lightskyblue1", "Tanimuca-Retuarã" = "blue", "Naduhup" =
+#'   "gray70", "Kakua-Nukak" = "gray30")
+#'   See the 'values' argument in ggplot2::scale_color_manual() for details.
 #'
 #' @return a visualization of a glotto(sub)data, glottodist or glottonmds object, which can be saved with glottosave()
 #' @export
@@ -41,8 +47,8 @@
 glottoplot <- function(glottodata = NULL, glottodist = NULL, type = NULL, glottonmds = NULL,
                        color = NULL, ptsize = NULL, label = NULL, filename = NULL, palette = NULL,
                        k = NULL, rm.na = FALSE, row2id = NULL,
-                       preventoverlap = FALSE, alpha = NULL){
-  if(is.null(type)){type <- "heatmap"}
+                       preventoverlap = FALSE, alpha = NULL, colorvec = NULL){
+
   if(is_dist(glottodata)){
     glottodist <- glottodata
   }
@@ -50,24 +56,33 @@ glottoplot <- function(glottodata = NULL, glottodist = NULL, type = NULL, glotto
     glottodata <- glottodist
   }
 
-  if(type == "heatmap"){
+  if( is.null(type)  ){
+    if(is.null(glottonmds)){
     glottoplot_heatmap(glottodist = glottodist, filename = filename)
-  }
-
-  if(!is.null(glottonmds)){
+    }
+    if(!is.null(glottonmds)){
     glottoplot_nmds(glottonmds = glottonmds,
-                    color = color, ptsize = ptsize, label = label, palette = palette, filename = filename, preventoverlap = preventoverlap, alpha = alpha)
+                      color = color, ptsize = ptsize, label = label, palette = palette, filename = filename, preventoverlap = preventoverlap, alpha = alpha)
+    }
   }
 
-  if(type == "nmds" & !is.null(glottodist)){
-    glottonmds <- glottonmds(glottodist = glottodist, k = k, rm.na = rm.na, row2id = row2id)
-    glottoplot_nmds(glottonmds = glottonmds,
-                    color = color, ptsize = ptsize, label = label, palette = palette, filename = filename, preventoverlap = preventoverlap, alpha = alpha)
+  if( !is.null(type)){
+   if(type == "heatmap"){
+     glottoplot_heatmap(glottodist = glottodist, filename = filename)
+   }
+    if(type == "nmds" & !is.null(glottodist)){
+      glottonmds <- glottonmds(glottodist = glottodist, k = k, rm.na = rm.na, row2id = row2id)
+      glottoplot_nmds(glottonmds = glottonmds,
+                      color = color, ptsize = ptsize, label = label, palette = palette, filename = filename, preventoverlap = preventoverlap, alpha = alpha)
+    }
+    if(type == "missing"){
+      glottoplot_naviewer(data = glottodata, id = "glottocode")
+    }
   }
 
-  if(type == "missing"){
-    glottoplot_naviewer(data = glottodata, id = "glottocode")
-  }
+
+
+
 
 }
 
@@ -76,30 +91,36 @@ glottoplot <- function(glottodata = NULL, glottodist = NULL, type = NULL, glotto
 #' Plot nmds in 2d or 3d
 #'
 #' @param glottonmds An glottonmds object
-#' @param color color
+#' @param color Name of column to color by
 #' @param ptsize ptsize
 #' @param label label
 #' @param palette color palette
 #' @param preventoverlap Only for 2d plots, Should overlap between data point be prevented?
 #' @param filename optional filename if output should be saved.
 #' @param alpha Transparency of points between 0 (very transparent) and 1 (not transparent)
+#' @param colorvec Vector specifying colors for individual values and legend
+#'   order (non-matching values are omitted), for example:
+#'   c("Arawakan" = "rosybrown1", "Yucuna"  = "red",
+#'   "Tucanoan" = "lightskyblue1", "Tanimuca-Retuarã" = "blue", "Naduhup" =
+#'   "gray70", "Kakua-Nukak" = "gray30")
+#'   See the 'values' argument in ggplot2::scale_color_manual() for details.
 #'
 #' @noRd
 #'
 #' @examples
 #' glottodata <- glottoget("demodata", meta = TRUE)
 #' glottodist <- glottodist(glottodata = glottodata)
-#' glottonmds <- glottonmds(glottodist, k = 2)
+#' glottonmds <- glottonmds(glottodist, k = 2, row2id = "glottocode")
 #'
 #' glottoplot_nmds(glottonmds = glottonmds, color = "family", ptsize = "isolate")
 #' glottoplot_nmds(glottonmds = glottonmds, color = "isolate")
-glottoplot_nmds <- function(glottonmds, color = NULL, ptsize = NULL, label = NULL, palette = NULL, filename = NULL, preventoverlap = FALSE, alpha = NULL){
+glottoplot_nmds <- function(glottonmds, color = NULL, ptsize = NULL, label = NULL, palette = NULL, filename = NULL, preventoverlap = FALSE, alpha = NULL, colorvec = NULL){
 
   nmds <- glottonmds[[1]]
   scoresdata <- glottonmds[[2]]
 
   if(nmds$ndim == 2){
-    glottoplot_nmds_2d(nmds = nmds, scoresdata = scoresdata, color = color, ptsize = ptsize, label = label, filename = filename, preventoverlap = preventoverlap, alpha = alpha)
+    glottoplot_nmds_2d(nmds = nmds, scoresdata = scoresdata, color = color, ptsize = ptsize, label = label, filename = filename, preventoverlap = preventoverlap, alpha = alpha, colorvec = colorvec)
   }
 
   if(nmds$ndim == 3){
@@ -117,7 +138,14 @@ glottoplot_nmds <- function(glottonmds, color = NULL, ptsize = NULL, label = NUL
 #' @param label label
 #' @param preventoverlap Should overlap between data points be avoided?
 #' @param filename optional filename if output should be saved.
-#' @param alpha Transparency of points between 0 (very transparent) and 1 (not transparent)
+#' @param alpha Transparency of points between 0 (very transparent) and 1 (not
+#'   transparent)
+#' @param colorvec Vector specifying colors for individual values and legend
+#'   order (non-matching values are omitted), for example:
+#'   c("Arawakan" = "rosybrown1", "Yucuna"  = "red",
+#'   "Tucanoan" = "lightskyblue1", "Tanimuca-Retuarã" = "blue", "Naduhup" =
+#'   "gray70", "Kakua-Nukak" = "gray30")
+#'   See the 'values' argument in ggplot2::scale_color_manual() for details.
 #'
 #' @noRd
 #'
@@ -131,7 +159,7 @@ glottoplot_nmds <- function(glottonmds, color = NULL, ptsize = NULL, label = NUL
 #'
 #' glottoplot_nmds_2d(nmds = nmds, scoresdata = scoresdata, color = "family", ptsize = "isolate")
 #' glottoplot_nmds_2d(nmds = nmds, scoresdata = scoresdata, color = "isolate")
-glottoplot_nmds_2d <- function(nmds, scoresdata, color = NULL, ptsize = NULL, label = NULL, filename = NULL, alpha = NULL, preventoverlap = FALSE){
+glottoplot_nmds_2d <- function(nmds, scoresdata, color = NULL, ptsize = NULL, label = NULL, filename = NULL, alpha = NULL, preventoverlap = FALSE, colorvec = NULL){
 
   scoresdata <- glottosimplify(scoresdata)
    duplo <- sum(duplicated(scoresdata[,c("NMDS1", "NMDS2")]) | duplicated(scoresdata[,c("NMDS1", "NMDS2")], fromLast = TRUE))
@@ -141,22 +169,22 @@ glottoplot_nmds_2d <- function(nmds, scoresdata, color = NULL, ptsize = NULL, la
   }
 if(preventoverlap == FALSE){
   if(is.null(alpha)){alpha <- 1}
-    nmdsplot <- ggplot2::ggplot(data = scoresdata, ggplot2::aes_string(x="NMDS1",y="NMDS2", col = color, size = ptsize, alpha = alpha)) +
-      ggplot2::geom_point() +
+    nmdsplot <- ggplot2::ggplot(data = scoresdata, ggplot2::aes_string(x="NMDS1",y="NMDS2", col = color) ) +
+      ggplot2::geom_point(size = ptsize, alpha = alpha) +
       {if(!is.null(label))ggplot2::geom_text(ggplot2::aes_string(label = label), hjust = 0, vjust = 0, show.legend = FALSE)} +
-      # {if(ellipse)ggplot2::stat_ellipse(type="t", level = 0.95, show.legend = FALSE, alpha = 0.5, size = 0.75, linetype = 2)} +
       ggplot2::coord_equal()+
       ggplot2::labs(title = paste0("NMDS (k = ", nmds$ndim, ", stress = ", round(nmds$stress, 2), ")"), x = "NMDS1", y = "NMDS2") +
-      ggplot2::theme_bw()
+      {if(!is.null(colorvec)){ggplot2::scale_color_manual(values = colorvec)}} +
+      ggplot2::theme(panel.background = ggplot2::element_blank(), legend.key=ggplot2::element_rect(fill="white"))
 } else{
   if(is.null(alpha)){alpha <- .3}
-  nmdsplot <- ggplot2::ggplot(data = scoresdata, ggplot2::aes_string(x="NMDS1",y="NMDS2", col = color, size = ptsize, alpha = alpha)) +
-    ggplot2::geom_point(position = ggplot2::position_jitter(width = 0.01, height = 0.01, seed = 22)) +
+  nmdsplot <- ggplot2::ggplot(data = scoresdata, ggplot2::aes_string(x="NMDS1",y="NMDS2", col = color) ) +
+    ggplot2::geom_point(size = ptsize, alpha = alpha, position = ggplot2::position_jitter(width = 0.01, height = 0.01, seed = 22)) +
     {if(!is.null(label))ggplot2::geom_text(position = ggplot2::position_jitter(width = 0.01, height = 0.01, seed = 22), ggplot2::aes_string(label = label), hjust = 0, vjust = 0, show.legend = FALSE)} +
-    # {if(ellipse)ggplot2::stat_ellipse(type="t", level = 0.95, show.legend = FALSE, alpha = 0.5, size = 0.75, linetype = 2)} +
     ggplot2::coord_equal()+
     ggplot2::labs(title = paste0("NMDS (k = ", nmds$ndim, ", stress = ", round(nmds$stress, 2), ")"), x = "NMDS1", y = "NMDS2") +
-    ggplot2::theme_bw()
+    {if(!is.null(colorvec)){ggplot2::scale_color_manual(values = colorvec)}} +
+    ggplot2::theme(panel.background = ggplot2::element_blank(), legend.key=ggplot2::element_rect(fill="white"))
 }
 
 

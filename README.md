@@ -10,6 +10,7 @@ stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://
 [![License: GPL
 v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![R-CMD-check](https://github.com/SietzeN/glottospace/workflows/R-CMD-check/badge.svg)](https://github.com/SietzeN/glottospace/actions)
+[![status](https://joss.theoj.org/papers/c93a1ccb6835a15c6026ea1ddc28b50c/status.svg)](https://joss.theoj.org/papers/c93a1ccb6835a15c6026ea1ddc28b50c)
 <!-- badges: end -->
 
 # Introduction
@@ -23,8 +24,9 @@ data to a location and plot it on a map. You can also calculate
 distances between languages based on their location or linguistic
 features and visualize those distances. In addition, with
 **glottospace** you can easily access global databases such as
-[glottolog](https://glottolog.org/) and [WALS](https://wals.info/) from
-R and integrate them with your own data.
+[glottolog](https://glottolog.org/), [WALS](https://wals.info/) and
+[D-PLACE](https://d-place.org/) from R and integrate them with your own
+data.
 
 # Development
 
@@ -71,12 +73,19 @@ please cite these data sources and packages as well.
 
 # Installation
 
+You can install the latest release of glottospace from
+[CRAN](https://CRAN.R-project.org/package=glottospace) with:
+
+``` r
+# install.packages("glottospace")
+```
+
 You can install the development version of glottospace from
 [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("SietzeN/glottospace", INSTALL_opts=c("--no-multiarch"))
+# devtools::install_github("SietzeN/glottospace", INSTALL_opts=c("--no-multiarch"))
 ```
 
 # Example
@@ -348,11 +357,11 @@ glottosearch(search = "yurakar")
 #> Bounding box:  xmin: -65.1224 ymin: -16.7479 xmax: -65.1224 ymax: -16.7479
 #> Geodetic CRS:  WGS 84
 #>      glottocode     name     macroarea isocode countries family_id
-#> 7543   yura1255 Yuracaré South America     yuz        BO  yura1255
+#> 7546   yura1255 Yuracaré South America     yuz        BO  yura1255
 #>      classification parent_id   family isolate family_size family_size_rank
-#> 7543           <NA>      <NA> Yuracaré    TRUE           1                1
+#> 7546           <NA>      <NA> Yuracaré    TRUE           1                1
 #>      country     continent sovereignty                  geometry
-#> 7543 Bolivia South America     Bolivia POINT (-65.1224 -16.7479)
+#> 7546 Bolivia South America     Bolivia POINT (-65.1224 -16.7479)
 ```
 
 Or limit the search to specific columns:
@@ -365,23 +374,20 @@ glottosearch(search = "Yucuni", columns = c("name", "family"))
 #> Bounding box:  xmin: -97.91818 ymin: -0.76075 xmax: -71.0033 ymax: 17.23743
 #> Geodetic CRS:  WGS 84
 #>      glottocode              name     macroarea isocode countries family_id
-#> 7529   yucu1253            Yucuna South America     ycn  BR;CO;PE  araw1281
-#> 7530   yucu1254 Yucunicoco Mixtec North America                MX  otom1299
+#> 7532   yucu1253            Yucuna South America     ycn  BR;CO;PE  araw1281
+#> 7533   yucu1254 Yucunicoco Mixtec North America                MX  otom1299
 #>                                                      classification parent_id
-#> 7529                            araw1281/japu1236/nucl1764/yucu1252  yucu1252
-#> 7530 otom1299/east2557/amuz1253/mixt1422/mixt1423/mixt1427/sout3179  sout3179
+#> 7532                            araw1281/japu1236/nucl1764/yucu1252  yucu1252
+#> 7533 otom1299/east2557/amuz1253/mixt1422/mixt1423/mixt1427/sout3179  sout3179
 #>           family isolate family_size family_size_rank  country     continent
-#> 7529    Arawakan   FALSE          77               40 Colombia South America
-#> 7530 Otomanguean   FALSE         181               44   Mexico North America
+#> 7532    Arawakan   FALSE          77               40 Colombia South America
+#> 7533 Otomanguean   FALSE         182               44   Mexico North America
 #>      sovereignty                   geometry
-#> 7529    Colombia  POINT (-71.0033 -0.76075)
-#> 7530      Mexico POINT (-97.91818 17.23743)
+#> 7532    Colombia  POINT (-71.0033 -0.76075)
+#> 7533      Mexico POINT (-97.91818 17.23743)
 ```
 
-checking for non-standard things in the check directory … NOTE Found the
-following files/directories:checking for non-standard things in the
-check directory … NOTE Found the following
-files/directories:fraSometimes you don’t find a match:
+Sometimes you don’t find a match:
 
 ``` r
 glottosearch(search = "matsigenka")[,"name"]
@@ -403,7 +409,7 @@ glottosearch(search = "matsigenka", tolerance = 0.2)[,"name"]
 #> Bounding box:  xmin: -74.4371 ymin: -11.5349 xmax: -74.4371 ymax: -11.5349
 #> Geodetic CRS:  WGS 84
 #>               name                  geometry
-#> 4775 Nomatsiguenga POINT (-74.4371 -11.5349)
+#> 4779 Nomatsiguenga POINT (-74.4371 -11.5349)
 ```
 
 Aha! There it is: ‘Machiguenga’
@@ -417,16 +423,16 @@ glottosearch(search = "matsigenka", tolerance = 0.4)[,"name"]
 #> Geodetic CRS:  WGS 84
 #> First 10 features:
 #>                    name                   geometry
-#> 1707 Eastern Maninkakan   POINT (-10.5394 9.33048)
-#> 3059    Kita Maninkakan   POINT (-9.49151 13.1798)
-#> 3143   Konyanka Maninka   POINT (-8.89972 8.04788)
+#> 1708 Eastern Maninkakan   POINT (-10.5394 9.33048)
+#> 3061    Kita Maninkakan   POINT (-9.49151 13.1798)
+#> 3145   Konyanka Maninka   POINT (-8.89972 8.04788)
 #> 3724   Maasina Fulfulde   POINT (-3.64763 11.1324)
 #> 3740        Machiguenga  POINT (-72.5017 -12.1291)
 #> 3894           Mandinka POINT (-15.65395 12.81652)
 #> 3930          Mansoanka   POINT (-15.9202 12.8218)
 #> 4033  Matigsalug Manobo     POINT (125.16 7.72124)
-#> 4775      Nomatsiguenga  POINT (-74.4371 -11.5349)
-#> 5368         Piamatsina   POINT (166.738 -14.9959)
+#> 4779      Nomatsiguenga  POINT (-74.4371 -11.5349)
+#> 5371         Piamatsina   POINT (166.738 -14.9959)
 ```
 
 ## glottofilter
@@ -454,8 +460,6 @@ features
 glottodata <- glottoget("demodata", meta = TRUE)
 glottodist <- glottodist(glottodata = glottodata)
 #> glottocode used as id
-#> For some variables of type 'symm' and 'asymm', it is not clear whether they are TRUE of FALSE. It is highly recommended to run glottoclean() before running glottodist(). Attempting to convert the following values to TRUE/FALSE...
-#> [1] "N" "Y"
 #> Values in binary columns (symm/asymm) recoded to TRUE/FALSE
 #> Missing values recoded to NA
 
@@ -474,8 +478,6 @@ linguistic, cultural, and environmental features.
 glottodata <- glottoget("demodata", meta = TRUE)
 glottodist <- glottodist(glottodata = glottodata)
 #> glottocode used as id
-#> For some variables of type 'symm' and 'asymm', it is not clear whether they are TRUE of FALSE. It is highly recommended to run glottoclean() before running glottodist(). Attempting to convert the following values to TRUE/FALSE...
-#> [1] "N" "Y"
 #> Values in binary columns (symm/asymm) recoded to TRUE/FALSE
 #> Missing values recoded to NA
 glottoplot(glottodist = glottodist)

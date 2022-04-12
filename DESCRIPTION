@@ -2,7 +2,7 @@ Type: Package
 Package: glottospace
 Title: Language Mapping and Geospatial Analysis of Linguistic and
         Cultural Data
-Version: 0.0.111
+Version: 0.0.112
 Author: Sietze Norder
 Maintainer: Sietze Norder <mail@sietzenorder.nl>
 Description: Streamlined workflows for geolinguistic analysis, including:
@@ -22,6 +22,6 @@ Language: en-US
 LazyData: true
 RoxygenNote: 7.1.2
 NeedsCompilation: no
-Packaged: 2022-03-15 10:54:20 UTC; sjnor
+Packaged: 2022-04-12 12:19:54 UTC; sjnor
 Repository: CRAN
-Date/Publication: 2022-03-16 13:10:02 UTC
+Date/Publication: 2022-04-12 12:42:29 UTC

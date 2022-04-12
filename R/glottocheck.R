@@ -41,6 +41,33 @@ glottocheck <- function(glottodata, diagnostic = TRUE, checkmeta = FALSE){
 
 }
 
+#' Guess id of glottodata
+#'
+#' Guess whether the id of glottodata is glottocode or glottosubcode
+#'
+#' @param glottodata glottodata to check
+#' @param id optional, if id is specified, the function will return original id
+#' @noRd
+#' @return
+#'
+glottocheck_id <- function(glottodata, id = NULL){
+  if(is.null(id)){
+    if("glottocode" %in% colnames(glottodata) & "glottosubcode" %nin% colnames(glottodata)){
+      id <- "glottocode"
+      message("glottocode used as id")
+    } else if("glottocode" %nin% colnames(glottodata) & "glottosubcode" %in% colnames(glottodata)){
+      id <- "glottosubcode"
+      message("glottosubcode used as id")
+    } else if(all(c("glottocode", "glottosubcode") %in% colnames(glottodata)) ){
+      id <- "glottocode"
+      message("Data contains glottocodes AND glottosubcodes, glottocode used as id. If this is not what you want, please specify id.")
+    } else if(all(c("glottocode", "glottosubcode") %nin% colnames(glottodata)) ){
+      stop("Please provide an id, or add a 'glottocode' or 'glottosubcode' column to your data")
+    }
+  }
+  id
+}
+
 #' Quality check of user-provided glottodata
 #'
 #' Go through a user-provided glottodataset and check whether:
@@ -141,6 +168,26 @@ glottocheck_metadata <- function(glottodata){
 glottocheck_hasmeta <- glottocheck_hasstructure <- function(glottodata){
   any(is_list(glottodata)) & any(names(glottodata) %in% "structure")
 }
+
+#' Check whether object is likely to be a structure table
+#'
+#'
+#' @param structure structure table
+#'
+#' @noRd
+#' @family <glottocheck>
+#' @examples
+#' glottodata <- glottoget("demodata", meta = TRUE)
+#' structure <- glottodata[["structure"]]
+#' glottocheck_isstructure(structure)
+glottocheck_isstructure <- function(structure){
+  if(!is.null(colnames(structure))){
+    return(all(colnames(structure) %in% colnames(glottocreate_structuretable())))
+  } else {
+    return(FALSE)
+  }
+}
+
 
 glottocheck_metatypes <- function(glottodata){
   if(!all(glottodata$structure$type %in% glottocreate_lookuptable()[,"type_lookup"]) ){
@@ -408,12 +455,60 @@ glottocheck_colmissing <- function(data, id, diagnostic = FALSE, rm.na = TRUE){
 #'
 #' @noRd
 #' @examples
-#' glottosubdata <- glottoget("demosubdata", meta = FALSE)
+#' glottosubdata <- glottoget("demosubdata")
 #' glottocheck_isglottosubdata(glottosubdata)
-glottocheck_isglottosubdata <- function(glottodata){
-    inherits(glottodata, what = "list" ) &
-    !any(names(glottodata) %in% "glottodata") &
-    !purrr::is_empty(colnames(glottodata[[1]])[1] == "glottosubcode")
+#'
+#' glottosubdata <- glottosimplify(glottosubdata)
+#' glottocheck_isglottosubdata(glottosubdata)
+glottocheck_isglottosubdata <- function(glottosubdata){
+ glottocheck_isglottosubdata_complex(glottosubdata) | glottocheck_isglottosubdata_simplified(glottosubdata) | inherits(x = glottosubdata, what = "glottosubdata")
+  }
+
+#' Guess whether an object is (simplified) glottosubdata
+#'
+#' @param glottodata User-provided glottodata
+#'
+#' @noRd
+#' @examples
+#' glottosubdata <- glottoget("demosubdata")
+#'
+#' glottosubdata <- glottosimplify(glottosubdata)
+#' glottocheck_isglottosubdata_simplified(glottosubdata)
+glottocheck_isglottosubdata_simplified <- function(glottosubdata){
+  if(inherits(glottosubdata, what = "list")  ){
+    if(any(names(glottosubdata) %in% "glottosubdata") ){
+      return(!purrr::is_empty(colnames(glottosubdata[[1]])[1] == "glottosubcode") )
+    } else { # 'glottosubdata' does not exist in names
+      return(FALSE)
+    }
+  } else{ # doesn't inherit list
+    if(!purrr::is_empty(colnames(glottosubdata)[1])){
+      return(colnames(glottosubdata)[1] == "glottosubcode")
+    } else {
+      return(FALSE)
+    }
+  }
+}
+
+#' Guess whether an object is (complex) glottosubdata
+#'
+#' @param glottosubdata glottosubdata
+#'
+#' @noRd
+#' @examples
+#' glottosubdata <- glottoget("demosubdata", meta = TRUE)
+#'
+#' glottocheck_isglottosubdata_complex(glottosubdata)
+glottocheck_isglottosubdata_complex <- function(glottosubdata){
+  if(inherits(glottosubdata, what = "list")  ){
+    if(all(names(glottosubdata) %nin% c("glottosubdata", "glottodata") ) ){
+      return(!purrr::is_empty(colnames(glottosubdata[[1]])[1] == "glottosubcode") )
+    } else { # 'glottosubdata' or 'glottodata' does exist in names
+      return(FALSE)
+    }
+  } else{ # doesn't inherit list
+      return(FALSE)
+  }
 }
 
 #' Guess whether an object is glottodata (and not glottosubdata)
@@ -427,11 +522,14 @@ glottocheck_isglottosubdata <- function(glottodata){
 #' glottodata <- glottoget("demodata", meta = TRUE)
 #' glottocheck_isglottodata(glottodata)
 glottocheck_isglottodata <- function(glottodata){
+  if(inherits(x = glottodata, what = "glottodata")){
+    return(TRUE)
+  } else {
   glottodata <- contrans_tb2df(glottodata)
-  if(is_list(glottodata)){
+  if(inherits(glottodata, what = "list")){
     if("glottodata" %in% names(glottodata)){
       if(!purrr::is_empty(colnames(glottodata[["glottodata"]])[1])){
-        return(colnames(glottodata[["glottodata"]])[1] %in% c("glottocode", "glottosubcode"))
+        return(colnames(glottodata[["glottodata"]])[1] == "glottocode")
       } else {
         return(FALSE)
       }
@@ -440,10 +538,11 @@ glottocheck_isglottodata <- function(glottodata){
     }
   } else {
     if(!purrr::is_empty(colnames(glottodata)[1])){
-      return(colnames(glottodata)[1] %in% c("glottocode", "glottosubcode"))
+      return(colnames(glottodata)[1] == "glottocode")
     } else {
       return(FALSE)
     }
+  }
   }
 }
 
